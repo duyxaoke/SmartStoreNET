@@ -1,11 +1,10 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Dynamic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Web;
 using System.Web.Mvc;
 using SmartStore.Collections;
 using SmartStore.ComponentModel;
@@ -107,6 +106,83 @@ namespace SmartStore.Services.Messages
 			model["Theme"] = CreateThemeModelPart(messageContext);
 			model["Customer"] = CreateModelPart(messageContext.Customer, messageContext);
 			model["Store"] = CreateModelPart(messageContext.Store, messageContext);
+		}
+
+		public object CreateModelPart(object part, bool ignoreNullMembers, params string[] ignoreMemberNames)
+		{
+			Guard.NotNull(part, nameof(part));
+
+			var store = _services.StoreContext.CurrentStore;
+			var messageContext = new MessageContext
+			{
+				Language = _services.WorkContext.WorkingLanguage,
+				Store = store,
+				BaseUri = new Uri(_services.StoreService.GetHost(store)),
+				Model = new TemplateModel()
+			};
+			
+			if (part is Customer x)
+			{
+				// This case is not handled in AddModelPart core method.
+				messageContext.Model["Part"] = CreateModelPart(x, messageContext);
+			}
+			else
+			{
+				AddModelPart(part, messageContext, "Part");
+			}
+
+			var result = messageContext.Model["Part"];
+
+			if (result is IDictionary<string, object> dict)
+			{
+				SanitizeModelDictionary(dict, ignoreNullMembers, ignoreMemberNames);
+			}
+
+			return result;
+		}
+
+		private void SanitizeModelDictionary(IDictionary<string, object> dict, bool ignoreNullMembers, params string[] ignoreMemberNames)
+		{
+			if (ignoreNullMembers || ignoreMemberNames.Length > 0)
+			{
+				foreach (var key in dict.Keys.ToArray())
+				{
+					var value = dict[key];
+
+					if (ignoreNullMembers && value == null)
+					{
+						dict.Remove(key);
+						continue;
+					}
+
+					if (ignoreMemberNames.Contains(key))
+					{
+						dict.Remove(key);
+						continue;
+					}
+
+					if (value != null && value.GetType().IsSequenceType())
+					{
+						var ignoreMemberNames2 = ignoreMemberNames
+							.Where(x => x.StartsWith(key + ".", StringComparison.OrdinalIgnoreCase))
+							.Select(x => x.Substring(key.Length + 1))
+							.ToArray();
+
+						if (value is IDictionary<string, object> dict2)
+						{
+							SanitizeModelDictionary(dict2, ignoreNullMembers, ignoreMemberNames2);
+						}
+						else
+						{
+							var list = ((IEnumerable)value).OfType<IDictionary<string, object>>();
+							foreach (var dict3 in list)
+							{
+								SanitizeModelDictionary(dict3, ignoreNullMembers, ignoreMemberNames2);
+							}
+						}
+					}
+				}
+			}
 		}
 
 		public virtual void AddModelPart(object part, MessageContext messageContext, string name = null)
@@ -450,8 +526,8 @@ namespace SmartStore.Services.Messages
 			var currency = _services.WorkContext.WorkingCurrency;
 			var additionalShippingCharge = _services.Resolve<ICurrencyService>().ConvertFromPrimaryStoreCurrency(part.AdditionalShippingCharge, currency);
 			var additionalShippingChargeFormatted = _services.Resolve<IPriceFormatter>().FormatPrice(additionalShippingCharge, false, currency.CurrencyCode, false, messageContext.Language);
-			var url = productUrlHelper.GetProductUrl(part.Id, part.GetSeName(messageContext.Language.Id), attributesXml);
-			var pictureInfo = GetPictureFor(part, null);
+			var url = BuildUrl(productUrlHelper.GetProductUrl(part.Id, part.GetSeName(messageContext.Language.Id), attributesXml), messageContext);
+			var pictureInfo = GetPictureFor(part, attributesXml);
 			var name = part.GetLocalized(x => x.Name, messageContext.Language.Id).Value;
 			var alt = T("Media.Product.ImageAlternateTextFormat", messageContext.Language.Id, name).Text;
 			
@@ -527,10 +603,10 @@ namespace SmartStore.Services.Messages
 				["WishlistUrl"] = BuildRouteUrl("Wishlist", new { customerGuid = part.CustomerGuid }, messageContext),
 				["EditUrl"] = BuildActionUrl("Edit", "Customer", new { id = part.Id, area = "admin" }, messageContext),
 				["PasswordRecoveryURL"] = pwdRecoveryToken == null ? null : BuildActionUrl("passwordrecoveryconfirm", "customer",
-					new { token = part.GetAttribute<string>(SystemCustomerAttributeNames.PasswordRecoveryToken), email = email, area = "" },
+					new { token = part.GetAttribute<string>(SystemCustomerAttributeNames.PasswordRecoveryToken), email, area = "" },
 					messageContext),
 				["AccountActivationURL"] = accountActivationToken == null ? null : BuildActionUrl("activation", "customer",
-					new { token = part.GetAttribute<string>(SystemCustomerAttributeNames.AccountActivationToken), email = email, area = "" },
+					new { token = part.GetAttribute<string>(SystemCustomerAttributeNames.AccountActivationToken), email, area = "" },
 					messageContext),
 
 				// Addresses

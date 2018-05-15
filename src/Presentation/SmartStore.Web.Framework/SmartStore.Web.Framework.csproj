@@ -238,12 +238,14 @@
     <Compile Include="Extensions\ActionResultExtensions.cs" />
     <Compile Include="Extensions\HtmlZoneExtensions.cs" />
     <Compile Include="Extensions\LocalizedValueExtensions.cs" />
+    <Compile Include="Filters\CookieConsentFilter.cs" />
     <Compile Include="Filters\JsonNetAttribute.cs" />
     <Compile Include="FrameworkCacheConsumer.cs" />
     <Compile Include="Localization\SetWorkingCultureAttribute.cs" />
     <Compile Include="Modelling\IAclSelector.cs" />
     <Compile Include="Modelling\IStoreSelector.cs" />
     <Compile Include="Modelling\Results\JsonNetResult.cs" />
+    <Compile Include="Modelling\Results\PermissiveRedirectResult.cs" />
     <Compile Include="Plugins\PluginRazorHost.cs" />
     <Compile Include="Settings\SaveSettingAttribute.cs" />
     <Compile Include="Settings\LoadSettingAttribute.cs" />
