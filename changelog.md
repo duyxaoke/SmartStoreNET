@@ -2,6 +2,7 @@
 
 ## SmartStore.NET 3.1.5
 ### New Features
+<<<<<<< HEAD
 * #1429 Search engine friendly topic URLs
 * Trusted Shops: Added consent checkbox to confirm order page for submission of customer email address to Trusted Shops if review widget is active
 * #1226 Shop-Connector: Added exchange of tier prices and delivery times
@@ -12,6 +13,11 @@
 * Allow forward slash in product tag URL slug
 * Theming: throttle AJAX cart refresh after spin up/down click
 * Moved StoreLastIpAddress & DisplayPrivacyAgreementOnContactUs from customer settings to privacy settings tab
+=======
+
+### Improvements
+* Added double opt-in feature for newsletter subscriptions during checkout (confirm order)
+>>>>>>> origin/3.1.x
 
 ### Bugfixes
 * Migration: take all same-named message templates into account
@@ -19,6 +25,7 @@
 * Theming: fix broken product review voting
 * Theming: added missing bottom space to .html-editor-content
 * Theming: Language switcher is not displayed if no currency options are available
+<<<<<<< HEAD
 * No bundle item thumbnail displayed in bundle summary if item is not individually visible
 * Tracking number in shipment details was not saved
 * Assigning or removing product tags did not invalidate model cache
@@ -32,6 +39,9 @@
 * Fixes category list on product edit page shows empty category name
 * #1438 Debitoor: The country is displayed twice
 * MegaSearch: Fixes indexing ignores DeliveryTimeIdForEmptyStock setting
+=======
+
+>>>>>>> origin/3.1.x
 
 
 ## SmartStore.NET 3.1.0
